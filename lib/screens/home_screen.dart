@@ -1,5 +1,8 @@
+import 'package:admin_panel_aarogyam/bloc/addBlogs/add_blog_bloc.dart';
+import 'package:admin_panel_aarogyam/screens/add_blog_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../widgets/doctor_details_widget.dart';
 
@@ -10,18 +13,52 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(title: const Text('Doctor Requests')),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text(
+                  'Aarogyam',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              ListTile(
+                title: const Text('Add Blog'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                          create: (context) => AddBlogBloc(),
+                          child: const AddBlogScreen()),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
         body: StreamBuilder<QuerySnapshot>(
-          stream:
-              FirebaseFirestore.instance.collection('DoctorRequest').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('DoctorRequest')
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             }
-        
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const CircularProgressIndicator(); // or any other loading indicator
             }
-        
+
             return ListView.builder(
               itemCount: snapshot.data!.docs.length,
               itemBuilder: (context, index) {
@@ -53,7 +90,7 @@ class AdminHomeScreen extends StatelessWidget {
                     child: Card(
                       child: ListTile(
                         title: Text('name :- $name'),
-                        subtitle:  Text('birthDate :- $age'),
+                        subtitle: Text('birthDate :- $age'),
                       ),
                     ),
                   ),

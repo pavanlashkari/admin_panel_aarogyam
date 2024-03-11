@@ -1,12 +1,12 @@
 import 'package:admin_panel_aarogyam/bloc/addMedicine/add_medicine_bloc.dart';
 import 'package:admin_panel_aarogyam/screens/add_medicine_screen.dart';
+import 'package:admin_panel_aarogyam/screens/edit_delete_screen.dart';
 import 'package:admin_panel_aarogyam/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
-
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
@@ -17,9 +17,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
     const AdminHomeScreen(),
     BlocProvider(
       create: (context) => AddMedicineBloc(),
-      child: AddMedicineScreen(addMedicineBloc: AddMedicineBloc()),
+      child: const AddMedicineScreen(),
     ),
-    const Text('3'),
+    BlocProvider(
+      create: (context) => AddMedicineBloc(),
+      child: const EditDeleteScreen(),
+    ),
   ];
 
   @override
@@ -42,10 +45,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
             icon: Icon(Icons.add_box_outlined),
             label: 'Add Medicine',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.add),
+          label: "Edit"),
         ],
       ),
     );

@@ -2,9 +2,6 @@ part of 'add_medicine_bloc.dart';
 
 abstract class AddMedicineEvent {
   const AddMedicineEvent();
-
-  @override
-  List<Object> get props => [];
 }
 
 class MedicineImagePickedEvent extends AddMedicineEvent {
@@ -13,19 +10,40 @@ class MedicineImagePickedEvent extends AddMedicineEvent {
   MedicineImagePickedEvent({required this.imageFile});
 }
 
+class MedicineDatePickedEvent extends AddMedicineEvent {
+  final String selectedDateString;
 
-class MedicineChangeEvent extends AddMedicineEvent {
-  MedicineChangeEvent({
-    required this.addMedicineModel,
-  });
+  MedicineDatePickedEvent({required this.selectedDateString});
+}
 
-  AddMedicineModel addMedicineModel;
+class MedicineFieldChangedEvent extends AddMedicineEvent {
+  final AddMedicineModel addMedicineModel;
+
+  MedicineFieldChangedEvent({required this.addMedicineModel,});
 }
 
 class MedicineSubmitFormEvent extends AddMedicineEvent {
-  MedicineSubmitFormEvent({
-    required this.addMedicineModel,
-  });
+  final AddMedicineModel addMedicineModel;
 
-  AddMedicineModel addMedicineModel;
+  MedicineSubmitFormEvent({required this.addMedicineModel,});
+}
+
+class MedicineEditEvent extends AddMedicineEvent{
+  final AddMedicineModel addMedicineModel;
+
+  MedicineEditEvent({required this.addMedicineModel});
+}
+
+class MedDeleteEvent extends AddMedicineEvent{
+  final AddMedicineModel addMedicineModel;
+
+  MedDeleteEvent({required this.addMedicineModel});
+}
+
+class GetMedicineData extends AddMedicineEvent{}
+
+class MedicineTypeSelectEvent extends AddMedicineEvent{
+  final String? selectedMedicineType;
+
+  MedicineTypeSelectEvent({required this.selectedMedicineType});
 }

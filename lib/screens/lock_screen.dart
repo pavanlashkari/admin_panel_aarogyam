@@ -28,7 +28,7 @@ class _LockScreenState extends State<LockScreen> {
         await Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => AdminHomeScreen(),
+            builder: (context) => const AdminHomeScreen(),
           ),
         );
 
@@ -175,7 +175,7 @@ class _LockScreenState extends State<LockScreen> {
   }
 
   Widget _buildNumberButton(String number) {
-    return Container(
+    return SizedBox(
       height: 50,
       width: 75,
       child: ElevatedButton(
@@ -186,7 +186,7 @@ class _LockScreenState extends State<LockScreen> {
   }
 
   Widget _buildDeleteButton() {
-    return Container(
+    return SizedBox(
       height: 50,
       width: 75,
       child: ElevatedButton(
