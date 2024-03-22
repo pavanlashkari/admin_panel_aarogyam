@@ -1,3 +1,4 @@
+import 'package:admin_panel_aarogyam/screens/bottomNavBar.dart';
 import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
@@ -19,16 +20,14 @@ class _LockScreenState extends State<LockScreen> {
     });
 
     if (enteredPin.length == 4) {
-      // Check the entered PIN here and perform the necessary actions
       if (enteredPin == '1234') {
-        // Correct PIN, perform unlock action
         setState(() {
           correctPinEntered = true;
         });
         await Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const AdminHomeScreen(),
+            builder: (context) => const BottomNavBar(),
           ),
         );
 
@@ -160,13 +159,6 @@ class _LockScreenState extends State<LockScreen> {
                   ],
                 ),
               ),
-              /* const SizedBox(height: 20.0),
-              Text(
-                //only for better understanding of digit we will remove after
-                enteredPin,
-                style:
-                    const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
-              ),*/
             ],
           ),
         ),

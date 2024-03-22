@@ -23,6 +23,8 @@ class AddMedicineLoadingState extends AddMedicineState {}
 
 class AddMedicineSuccessState extends AddMedicineState {}
 
+class EditMedicineSuccessState extends AddMedicineState {}
+
 class AddMedicineErrorState extends AddMedicineState {
   final String error;
 
@@ -87,6 +89,8 @@ class AddMedicinePriceInvalidState extends AddMedicineState {
   const AddMedicinePriceInvalidState({required this.error});
 }
 class AddMedicineImageValidState extends AddMedicineState {}
+
+class EditMedicineImageValidState extends AddMedicineState {}
 
 class AddMedicineImageInvalidState extends AddMedicineState {
   final String error;

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:admin_panel_aarogyam/repository/database_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -101,7 +100,7 @@ class AddMedicineBloc extends Bloc<AddMedicineEvent, AddMedicineState> {
           final medImgUrl = await storageRef.getDownloadURL();
 
           final addMedicine = AddMedicineModel();
-          final documentID = await db.addMedicine(addMedicine.copyWith(
+          await db.addMedicine(addMedicine.copyWith(
               name: event.addMedicineModel.name,
               description: event.addMedicineModel.description,
               dosageForm: event.addMedicineModel.dosageForm,
@@ -153,8 +152,7 @@ class AddMedicineBloc extends Bloc<AddMedicineEvent, AddMedicineState> {
               strength: event.addMedicineModel.strength,
               usageInformation: event.addMedicineModel.usageInformation,
               medicineType: event.addMedicineModel.medicineType),uid);
-          emit(AddMedicineSuccessState());
-
+          emit(EditMedicineSuccessState());
         } catch (e) {
           print(e.toString());
         }
@@ -164,7 +162,7 @@ class AddMedicineBloc extends Bloc<AddMedicineEvent, AddMedicineState> {
       _validateForm(event.addMedicineModel, emit);
     });
     on<MedicineImagePickedEvent>((event, emit) {
-      emit(ImagePickedState(imageFile: event.imageFile)); // Emit the new image file
+      emit(ImagePickedState(imageFile: event.imageFile));
     });
     on<GetMedicineData>((event, emit) async {
       emit(AddMedicineLoadingState());

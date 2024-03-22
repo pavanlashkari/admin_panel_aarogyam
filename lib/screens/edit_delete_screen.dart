@@ -25,7 +25,7 @@ class _EditDeleteScreenState extends State<EditDeleteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edit"),
+        title: const Text("Edit Screen"),
       ),
       body: BlocConsumer<AddMedicineBloc, AddMedicineState>(
         listener: (context, state) {
@@ -57,7 +57,7 @@ class _EditDeleteScreenState extends State<EditDeleteScreen> {
                         PopupMenuButton(
                           itemBuilder: (context) => [
                             PopupMenuItem(
-                              child: GestureDetector(
+                              child: InkWell(
                                 onTap: () {
                                   print('onTap');
                                   Navigator.push(
@@ -95,7 +95,7 @@ class _EditDeleteScreenState extends State<EditDeleteScreen> {
                               ),
                             ),
                             PopupMenuItem(
-                              child: GestureDetector(
+                              child: InkWell(
                                 onTap: () {
                                   BlocProvider.of<AddMedicineBloc>(context).add(
                                     MedDeleteEvent(

@@ -48,7 +48,7 @@ class AdminHomeScreen extends StatelessWidget {
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
-              .collection('DoctorRequest')
+              .collection('request')
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -66,7 +66,7 @@ class AdminHomeScreen extends StatelessWidget {
                     snapshot.data!.docs[index].data() as Map<String, dynamic>;
                 String documentId = snapshot.data!.docs[index].id;
                 String name = data['name'] ?? '';
-                String age = data['age'] ?? '';
+                String age = data['dob'] ?? '';
                 return Material(
                   child: InkWell(
                     onTap: () => Navigator.push(
@@ -78,7 +78,7 @@ class AdminHomeScreen extends StatelessWidget {
                           dage: age,
                           dcertificate: data['certificate'],
                           demail: data['email'],
-                          dfee: data['general_fee'],
+                          dfee: data['generalFee'],
                           dimage: data['image'],
                           dpass: data['password'],
                           dstatus: data['status'],

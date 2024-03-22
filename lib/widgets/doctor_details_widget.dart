@@ -34,6 +34,63 @@ class DoctorDetails extends StatefulWidget {
 }
 
 class _DoctorDetailsState extends State<DoctorDetails> {
+  void _acceptDoctor(BuildContext context) async {
+    await FirebaseFirestore.instance
+        .collection('request')
+        .doc(widget.documentId)
+        .update({'status' : 'accepted'});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Doctor accepted successfully!'),
+        duration: Duration(seconds: 2), // Adjust the duration as needed
+      ),
+    );
+    setState(() {});
+  }
+
+  void _rejectedDoctor(BuildContext context) async {
+    await FirebaseFirestore.instance
+        .collection('request')
+        .doc(widget.documentId)
+        .update({'status' : 'rejected'});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Doctor rejected successfully!'),
+        duration: Duration(seconds: 2), // Adjust the duration as needed
+      ),
+    );
+    setState(() {});
+  }
+
+  void _showDegree(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.6,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(widget.dcertificate),
+                fit: BoxFit.fill,
+              ),
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +99,7 @@ class _DoctorDetailsState extends State<DoctorDetails> {
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
-            .collection('DoctorRequest')
+            .collection('request')
             .doc(widget.documentId)
             .get(),
         builder: (context, snapshot) {
@@ -51,7 +108,7 @@ class _DoctorDetailsState extends State<DoctorDetails> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
+            return const Center(child: CircularProgressIndicator());
           }
 
           var doctorData = snapshot.data?.data() as Map<String, dynamic>?;
@@ -90,7 +147,7 @@ class _DoctorDetailsState extends State<DoctorDetails> {
                             const SizedBox(height: 8.0),
                             Text('Specialist: ${widget.dtype}'),
                             const SizedBox(height: 8.0),
-                            Text('Age: ${widget.dage}'),
+                            Text('DOB: ${widget.dage}'),
                             const SizedBox(height: 8.0),
                             Text('Status: ${widget.dstatus}'),
                             const SizedBox(height: 8.0),
@@ -205,86 +262,6 @@ class _DoctorDetailsState extends State<DoctorDetails> {
           }
         },
       ),
-    );
-  }
-
-  void _acceptDoctor(BuildContext context) async {
-    await FirebaseFirestore.instance
-        .collection('DoctorRequest')
-        .doc(widget.documentId)
-        .set({
-      'name': widget.dname,
-      'age': widget.dage,
-      'address': widget.daddress,
-      'specialist': widget.dtype,
-      'general_fee': widget.dfee,
-      'email': widget.demail,
-      'password': widget.dpass,
-      'status': 'accepted',
-      'image': widget.dimage,
-      'certificate': widget.dcertificate,
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Doctor accepted successfully!'),
-        duration: Duration(seconds: 2), // Adjust the duration as needed
-      ),
-    );
-    setState(() {});
-  }
-
-  void _rejectedDoctor(BuildContext context) async {
-    await FirebaseFirestore.instance
-        .collection('DoctorRequest')
-        .doc(widget.documentId)
-        .set({
-      'name': widget.dname,
-      'age': widget.dage,
-      'address': widget.daddress,
-      'specialist': widget.dtype,
-      'general_fee': widget.dfee,
-      'email': widget.demail,
-      'password': widget.dpass,
-      'status': 'rejected',
-      'image': widget.dimage,
-      'certificate': widget.dcertificate,
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Doctor rejected successfully!'),
-        duration: Duration(seconds: 2), // Adjust the duration as needed
-      ),
-    );
-    setState(() {});
-  }
-
-  void _showDegree(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.6,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.dcertificate),
-                fit: BoxFit.fill,
-              ),
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

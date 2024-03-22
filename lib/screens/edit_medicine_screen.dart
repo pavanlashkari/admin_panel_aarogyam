@@ -143,21 +143,10 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
         listeners: [
           BlocListener<AddMedicineBloc, AddMedicineState>(
             listener: (context, state) {
-              if (state is AddMedicineClearFormState) {
-                _medicineNameController.clear();
-                _medicineDescriptionController.clear();
-                _manufacturerController.clear();
-                _dosageFormController.clear();
-                _strengthController.clear();
-                _usageInformationController.clear();
-                _stockQuantityController.clear();
-                _expiryDateController.clear();
-                _priceController.clear();
-                pickedFile = null;
-              } else if (state is AddMedicineSuccessState) {
+              if (state is EditMedicineSuccessState) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Data successfully entered',
+                    content: Text('Data successfully edited',
                         style: TextStyle(color: Colors.black)),
                     duration: Duration(seconds: 2),
                     backgroundColor: Colors.green,
@@ -305,6 +294,7 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
                           BlocProvider.of<AddMedicineBloc>(context).add(
                               MedicineEditEvent(addMedicineModel: formModel));
                         }
+                        Navigator.pop(context);
                       },
                       child: ElevatedButton(
                         onPressed: () {
@@ -358,6 +348,7 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
                       value: selectedMedicineType,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
+                          selectedMedicineType = newValue;
                           _onMedicineTypeSelectedChanged(newValue);
                           print(selectedMedicineType);
                         }

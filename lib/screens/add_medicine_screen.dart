@@ -106,13 +106,12 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
               } else if (state is AddMedicineSuccessState) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Data successfully edited',
+                    content: Text('Data successfully Added',
                         style: TextStyle(color: Colors.black)),
                     duration: Duration(seconds: 2),
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.pop(context);
               }
             },
           ),
@@ -307,6 +306,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                       value: selectedMedicineType,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
+                          selectedMedicineType = newValue;
                           _onMedicineTypeSelectedChanged(newValue);
                           print(selectedMedicineType);
                         }
