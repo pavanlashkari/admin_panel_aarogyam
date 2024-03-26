@@ -2,7 +2,6 @@ import 'package:admin_panel_aarogyam/data%20model/AddMedicineModel.dart';
 import 'package:admin_panel_aarogyam/screens/edit_medicine_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../bloc/addMedicine/add_medicine_bloc.dart';
 
 class EditDeleteScreen extends StatefulWidget {
@@ -51,80 +50,81 @@ class _EditDeleteScreenState extends State<EditDeleteScreen> {
                     return const SizedBox();
                   }
                   return ListTile(
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PopupMenuButton(
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              child: InkWell(
-                                onTap: () {
-                                  print('onTap');
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BlocProvider(
-                                        create: (context) => AddMedicineBloc(),
-                                        child: EditMedicineForm(
-                                          medId: data[index].uid!,
-                                          medName: data[index].name!,
-                                          medDescription:
-                                              data[index].description!,
-                                          medManufacturer:
-                                              data[index].manufacturer!,
-                                          medDosageForm:
-                                              data[index].dosageForm!,
-                                          medStrength: data[index].strength!,
-                                          medUsageInfo:
-                                              data[index].usageInformation!,
-                                          medStockQuantity: data[index]
-                                              .stockQuantity
-                                              .toString(),
-                                          medPrice:
-                                              data[index].price.toString(),
-                                          medExDate: data[index].expiryDate!,
-                                          medImage: data[index].productImage!,
-                                          selectedMedicineType:
-                                              data[index].medicineType!,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: const Text("Edit"),
-                              ),
-                            ),
-                            PopupMenuItem(
-                              child: InkWell(
-                                onTap: () {
-                                  BlocProvider.of<AddMedicineBloc>(context).add(
-                                    MedDeleteEvent(
-                                      addMedicineModel: AddMedicineModel(
-                                        uid: data[index].uid!,
-                                        name: data[index].name!,
-                                        description: data[index].description!,
-                                        manufacturer: data[index].manufacturer!,
-                                        dosageForm: data[index].dosageForm!,
-                                        strength: data[index].strength!,
-                                        usageInformation:
-                                            data[index].usageInformation!,
-                                        stockQuantity:
-                                            data[index].stockQuantity,
-                                        price: data[index].price,
-                                        expiryDate: data[index].expiryDate!,
-                                        productImage: data[index].productImage!,
-                                        medicineType: data[index].medicineType!,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: const Text("Delete"),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                   onTap: () => showDialog(
+    context: context,
+                     builder: (context) => AlertDialog(
+                       title: const Text('Options'),
+                       content: Column(
+                         mainAxisSize: MainAxisSize.min,
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           ListTile(
+                             title: const Text('Update'),
+                             onTap: () {
+                               Navigator.pop(context);
+                               print('onTap');
+                               Navigator.push(
+                                 context,
+                                 MaterialPageRoute(
+                                   builder: (context) => BlocProvider(
+                                     create: (context) => AddMedicineBloc(),
+                                     child: EditMedicineForm(
+                                       medId: data[index].uid!,
+                                       medName: data[index].name!,
+                                       medDescription:
+                                       data[index].description!,
+                                       medManufacturer:
+                                       data[index].manufacturer!,
+                                       medDosageForm:
+                                       data[index].dosageForm!,
+                                       medStrength: data[index].strength!,
+                                       medUsageInfo:
+                                       data[index].usageInformation!,
+                                       medStockQuantity: data[index]
+                                           .stockQuantity
+                                           .toString(),
+                                       medPrice:
+                                       data[index].price.toString(),
+                                       medExDate: data[index].expiryDate!,
+                                       medImage: data[index].productImage!,
+                                       selectedMedicineType:
+                                       data[index].medicineType!,
+                                     ),
+                                   ),
+                                 ),
+                               );
+                             },
+                           ),
+                           ListTile(
+                             title: const Text('Delete'),
+                             onTap: () {
+                               Navigator.pop(context);
+                               BlocProvider.of<AddMedicineBloc>(context).add(
+                                 MedDeleteEvent(
+                                   addMedicineModel: AddMedicineModel(
+                                     uid: data[index].uid!,
+                                     name: data[index].name!,
+                                     description: data[index].description!,
+                                     manufacturer: data[index].manufacturer!,
+                                     dosageForm: data[index].dosageForm!,
+                                     strength: data[index].strength!,
+                                     usageInformation:
+                                     data[index].usageInformation!,
+                                     stockQuantity:
+                                     data[index].stockQuantity,
+                                     price: data[index].price,
+                                     expiryDate: data[index].expiryDate!,
+                                     productImage: data[index].productImage!,
+                                     medicineType: data[index].medicineType!,
+                                   ),
+                                 ),
+                               );
+                             },
+                           ),
+                         ],
+                       ),
+                     ),
+                   ),
                     title: Text(data[index].name ?? ""),
                     subtitle: Text("${data[index].price ?? 0}"),
                     leading: SizedBox(

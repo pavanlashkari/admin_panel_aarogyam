@@ -1,10 +1,14 @@
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../bloc/addMedicine/add_medicine_bloc.dart';
+import 'package:uuid/uuid.dart';
+
 import '../data model/AddMedicineModel.dart';
+import '../repository/database_repository.dart';
 
 class EditMedicineForm extends StatefulWidget {
   const EditMedicineForm({
@@ -39,6 +43,7 @@ class EditMedicineForm extends StatefulWidget {
   @override
   State<EditMedicineForm> createState() => _EditMedicineFormState();
 }
+
 class _EditMedicineFormState extends State<EditMedicineForm> {
   final List<String> medicineTypes = [
     'Fever',
@@ -53,44 +58,10 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
   ];
 
   DateTime selectedDate = DateTime.now();
-
   final ImagePicker _imagePicker = ImagePicker();
-
   XFile? pickedFile;
+  String? formattedDate;
 
-  void _onFieldChanged() {
-    AddMedicineModel formModel = AddMedicineModel(
-      name: _medicineNameController.text,
-      description: _medicineDescriptionController.text,
-      manufacturer: _manufacturerController.text,
-      dosageForm: _dosageFormController.text,
-      strength: _strengthController.text,
-      usageInformation: _usageInformationController.text,
-      stockQuantity: int.tryParse(_stockQuantityController.text) ?? 0,
-      expiryDate: _expiryDateController.text,
-      price: double.tryParse(_priceController.text) ?? 0.0,
-      productImage: pickedFile?.path,
-      medicineType: selectedMedicineType,
-      uid : uid,
-    );
-    BlocProvider.of<AddMedicineBloc>(context)
-        .add(MedicineFieldChangedEvent(addMedicineModel: formModel));
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2050),
-      initialDate: selectedDate,
-    );
-    if (picked != null && picked != selectedDate) {
-      DateFormat dateFormat = DateFormat('dd/MM/yyyy');
-      String formattedDate = dateFormat.format(picked);
-      BlocProvider.of<AddMedicineBloc>(context)
-          .add(MedicineDatePickedEvent(selectedDateString: formattedDate));
-    }
-  }
   late TextEditingController _medicineNameController;
   late TextEditingController _medicineDescriptionController;
   late TextEditingController _manufacturerController;
@@ -109,12 +80,16 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
     uid = widget.medId;
     selectedMedicineType = widget.selectedMedicineType;
     _medicineNameController = TextEditingController(text: widget.medName);
-    _medicineDescriptionController = TextEditingController(text: widget.medDescription);
-    _manufacturerController = TextEditingController(text: widget.medManufacturer);
+    _medicineDescriptionController =
+        TextEditingController(text: widget.medDescription);
+    _manufacturerController =
+        TextEditingController(text: widget.medManufacturer);
     _dosageFormController = TextEditingController(text: widget.medDosageForm);
     _strengthController = TextEditingController(text: widget.medStrength);
-    _usageInformationController = TextEditingController(text: widget.medUsageInfo);
-    _stockQuantityController = TextEditingController(text: widget.medStockQuantity);
+    _usageInformationController =
+        TextEditingController(text: widget.medUsageInfo);
+    _stockQuantityController =
+        TextEditingController(text: widget.medStockQuantity);
     _expiryDateController = TextEditingController(text: widget.medExDate);
     _priceController = TextEditingController(text: widget.medPrice);
   }
@@ -139,243 +114,183 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
       appBar: AppBar(
         title: const Text('Edit Medicine'),
       ),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<AddMedicineBloc, AddMedicineState>(
-            listener: (context, state) {
-              if (state is EditMedicineSuccessState) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Data successfully edited',
-                        style: TextStyle(color: Colors.black)),
-                    duration: Duration(seconds: 2),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-        child: _buildForm(context),
-      ),
+      body: _buildForm(context),
     );
   }
 
   Widget _buildForm(BuildContext context) {
-    return BlocBuilder<AddMedicineBloc, AddMedicineState>(
-      builder: (context, state) {
-        if (state is AddMedicineLoadingState) {
-          return const Center(child: CircularProgressIndicator());
-        } else {
-          return ListView(
+    return ListView(
+      children: [
+        Form(
+          child: Column(
             children: [
-              Form(
-                child: Column(
-                  children: [
-                    _buildTextWidget(
-                      controller: _medicineNameController,
-                      label: 'Medicine Name',
-                      fieldName: 'medicineName',
+              _buildTextWidget(
+                controller: _medicineNameController,
+                label: 'Medicine Name',
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter medicine name';
+                  }
+                  return null;
+                },
+              ),
+              _buildDropdownWidget(),
+              _buildTextWidget(
+                controller: _medicineDescriptionController,
+                label: 'Medicine Description',
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter medicine description';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _manufacturerController,
+                label: 'Manufacturer',
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter manufacturer';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _dosageFormController,
+                label: 'Dosage Form',
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter dosage form';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _strengthController,
+                label: 'Strength',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter strength';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _usageInformationController,
+                label: 'Usage Information',
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter usage information';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _stockQuantityController,
+                label: 'Stock Quantity',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter stock quantity';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextWidget(
+                controller: _priceController,
+                label: 'Price',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter price';
+                  }
+                  return null;
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  onTap: _selectDate,
+                  controller: _expiryDateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
                     ),
-                    _buildDropdownWidget(),
-                    _buildTextWidget(
-                      controller: _medicineDescriptionController,
-                      label: 'Medicine Description',
-                      fieldName: 'medicineDescription',
-                    ),
-                    _buildTextWidget(
-                      controller: _manufacturerController,
-                      label: 'Manufacturer',
-                      fieldName: 'manufacturer',
-                    ),
-                    _buildTextWidget(
-                      controller: _dosageFormController,
-                      label: 'Dosage Form',
-                      fieldName: 'dosageForm',
-                    ),
-                    _buildTextWidget(
-                        controller: _strengthController,
-                        label: 'Strength',
-                        fieldName: 'strength',
-                        keyboardType: TextInputType.number),
-                    _buildTextWidget(
-                      controller: _usageInformationController,
-                      label: 'Usage Information',
-                      fieldName: 'usageInformation',
-                    ),
-                    _buildTextWidget(
-                      controller: _stockQuantityController,
-                      label: 'Stock Quantity',
-                      fieldName: 'stockQuantity',
-                      keyboardType: TextInputType.number,
-                    ),
-                    _buildTextWidget(
-                      controller: _priceController,
-                      label: 'Price',
-                      fieldName: 'price',
-                      keyboardType: TextInputType.number,
-                    ),
-                    BlocBuilder<AddMedicineBloc, AddMedicineState>(
-                      builder: (context, state) {
-                        if (state is DatePickedState) {
-                          _expiryDateController.text = state.selectedDateString;
-                        } else if (state is DatePickedChangedState) {
-                          _expiryDateController.text =
-                              state.newSelectedDateString;
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            onTap: _selectDate,
-                            controller: _expiryDateController,
-                            readOnly: true,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(15))),
-                              prefixIcon: Icon(Icons.calendar_month_rounded),
-                              label: Text(
-                                'Expiry Date',
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    ElevatedButton(
-                      onPressed: _getImage,
-                      child: const Text('Pick Image'),
-                    ),
-                    BlocBuilder<AddMedicineBloc, AddMedicineState>(
-                      builder: (context, state) {
-                        if (state is ImagePickedState) {
-                          final imageFile = state.imageFile;
-                          return Image.file(File(imageFile.path));
-                        } else if(widget.medImage != null) {
-                          return Image.network(widget.medImage);
-                        }else{
-                          return const Text('No Image Selected');
-                        }
-                      },
-                    ),
-                    BlocBuilder<AddMedicineBloc, AddMedicineState>(
-                      builder: (context, state) {
-                        if (state is AddMedicineErrorState) {
-                          return Text(
-                            state.error,
-                            style: const TextStyle(color: Colors.red),
-                          );
-                        } else {
-                          return Container();
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    BlocListener<AddMedicineBloc, AddMedicineState>(
-                      listener: (context, state) {
-                        if (state is AddMedicineFormValidState) {
-                          AddMedicineModel formModel = AddMedicineModel(
-                            uid: uid,
-                            medicineType: selectedMedicineType,
-                            name: _medicineNameController.text,
-                            description: _medicineDescriptionController.text,
-                            manufacturer: _manufacturerController.text,
-                            dosageForm: _dosageFormController.text,
-                            strength: _strengthController.text,
-                            usageInformation: _usageInformationController.text,
-                            stockQuantity:
-                                int.tryParse(_stockQuantityController.text) ??
-                                    0,
-                            expiryDate: _expiryDateController.text,
-                            price:
-                                double.tryParse(_priceController.text) ?? 0.0,
-                            productImage: pickedFile!.path,
-                          );
-                          BlocProvider.of<AddMedicineBloc>(context).add(
-                              MedicineEditEvent(addMedicineModel: formModel));
-                        }
-                        Navigator.pop(context);
-                      },
-                      child: ElevatedButton(
-                        onPressed: () {
-                          print('edit button clicked');
-                          _onFieldChanged();
-                        },
-                        child: const Text('Edit'),
-                      ),
-                    ),
-                  ],
+                    prefixIcon: Icon(Icons.calendar_month_rounded),
+                    labelText: 'Expiry Date',
+                  ),
                 ),
               ),
+              ElevatedButton(
+                onPressed: _getImage,
+                child: const Text('Pick Image'),
+              ),
+              _buildImageWidget(),
+              ElevatedButton(
+                onPressed: _editWidget,
+                child: const Text('Edit'),
+              ),
             ],
-          );
-        }
-      },
+          ),
+        ),
+      ],
     );
   }
+
   Widget _buildDropdownWidget() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          const Text("Medicine Type :-     " ,style: TextStyle(fontSize: 17)),
+          const Text(
+            "Medicine Type :-     ",
+            style: TextStyle(fontSize: 17),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              BlocBuilder<AddMedicineBloc, AddMedicineState>(
-                builder: (context, state) {
-                  if (state is MedicineTypeSelectedState) {
-                    return DropdownButton<String>(
-                      alignment: Alignment.center,
-                      value: state.selectedMedicineType,
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          selectedMedicineType = newValue;
-                          _onMedicineTypeSelectedChanged(newValue);
-                          print(selectedMedicineType);
-                        }
-                      },
-                      items:
-                      medicineTypes.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    );
-                  } else {
-                    return DropdownButton<String>(
-                      value: selectedMedicineType,
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          selectedMedicineType = newValue;
-                          _onMedicineTypeSelectedChanged(newValue);
-                          print(selectedMedicineType);
-                        }
-                      },
-                      items:
-                      medicineTypes.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    );
+              DropdownButton<String>(
+                alignment: Alignment.center,
+                value: selectedMedicineType,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedMedicineType = newValue;
+                    });
                   }
                 },
-              ),
-              const SizedBox(height: 4),
+                items:
+                    medicineTypes.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              )
             ],
           ),
         ],
       ),
     );
   }
+
+  Widget _buildImageWidget() {
+    if (pickedFile != null) {
+      return Image.file(File(pickedFile!.path));
+    } else if (widget.medImage != null) {
+      return Image.network(widget.medImage);
+    } else {
+      return const Text('No Image Selected');
+    }
+  }
+
   Widget _buildTextWidget({
     required TextEditingController controller,
     required String label,
-    required String fieldName,
     TextInputType? keyboardType,
+    String? Function(String?)? validator, // Validator function added
   }) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -384,7 +299,12 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
         children: [
           TextFormField(
             controller: controller,
-            decoration: InputDecoration(labelText: label),
+            decoration: InputDecoration(
+              labelText: label,
+              errorText: validator != null
+                  ? validator(controller.text)
+                  : null, // Validation added here
+            ),
             keyboardType: keyboardType,
           ),
           const SizedBox(height: 4),
@@ -396,12 +316,135 @@ class _EditMedicineFormState extends State<EditMedicineForm> {
   Future<void> _getImage() async {
     pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      BlocProvider.of<AddMedicineBloc>(context).add(MedicineImagePickedEvent(imageFile: pickedFile!));
+    if (pickedFile != null) {}
+  }
+
+  void _editWidget() async {
+    if (_validateForm()) {
+      String uidPhoto = const Uuid().v4();
+      if (pickedFile != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('medicineImage')
+            .child('$uidPhoto.jpg');
+        await storageRef.putFile(File(pickedFile!.path));
+        final medImgUrl = await storageRef.getDownloadURL();
+        final uid = widget.medId;
+        print(uid);
+        FirebaseFirestore.instance.collection("medicineDetails").doc(uid).set(
+            AddMedicineModel(
+              uid: uid,
+                name: _medicineNameController.text,
+                description: _medicineDescriptionController.text,
+                dosageForm: _dosageFormController.text,
+                expiryDate: _expiryDateController.text,
+                manufacturer: _manufacturerController.text,
+                price: double.parse(_priceController.text),
+                productImage: medImgUrl,
+                stockQuantity: double.parse(_stockQuantityController.text),
+                strength: _strengthController.text,
+                usageInformation: _usageInformationController.text,
+                medicineType: selectedMedicineType) as Map<String, dynamic>);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Data successfully edited',
+              style: TextStyle(color: Colors.black),
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final db = DatabaseRepositoryImplement();
+        final uid = widget.medId;
+        print(uid);
+        db.editMedicine(
+            AddMedicineModel().copyWith(
+              uid: uid,
+
+                name: _medicineNameController.text,
+                description: _medicineDescriptionController.text,
+                dosageForm: _dosageFormController.text,
+                expiryDate: _expiryDateController.text,
+                manufacturer: _manufacturerController.text,
+                price: double.parse(_priceController.text),
+                productImage: widget.medImage,
+                stockQuantity: double.parse(_stockQuantityController.text),
+                strength: _strengthController.text,
+                usageInformation: _usageInformationController.text,
+                medicineType: selectedMedicineType),
+            uid);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Data successfully edited',
+              style: TextStyle(color: Colors.black),
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
-  void _onMedicineTypeSelectedChanged(String selectedMedicineType) {
-    BlocProvider.of<AddMedicineBloc>(context).add(
-        MedicineTypeSelectEvent(selectedMedicineType: selectedMedicineType));
+
+  bool _validateForm() {
+    if (_medicineNameController.text.isEmpty) {
+      _showErrorSnackBar('Please enter medicine name');
+      return false;
+    } else if (_medicineDescriptionController.text.isEmpty) {
+      _showErrorSnackBar('Please enter medicine description');
+      return false;
+    } else if (_manufacturerController.text.isEmpty) {
+      _showErrorSnackBar('Please enter manufacturer');
+      return false;
+    } else if (_dosageFormController.text.isEmpty) {
+      _showErrorSnackBar('Please enter dosage form');
+      return false;
+    } else if (_strengthController.text.isEmpty) {
+      _showErrorSnackBar('Please enter strength');
+      return false;
+    } else if (_usageInformationController.text.isEmpty) {
+      _showErrorSnackBar('Please enter usage information');
+      return false;
+    } else if (_stockQuantityController.text.isEmpty) {
+      _showErrorSnackBar('Please enter stock quantity');
+      return false;
+    } else if (_priceController.text.isEmpty) {
+      _showErrorSnackBar('Please enter price');
+      return false;
+    }
+    return true;
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.white),
+        ),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2050),
+      initialDate: selectedDate,
+    );
+    if (picked != null && picked != selectedDate) {
+      DateFormat dateFormat = DateFormat('dd/MM/yyyy');
+      _expiryDateController.text = dateFormat.format(picked);
+      print(formattedDate);
+      setState(() {});
+    }
   }
 }
